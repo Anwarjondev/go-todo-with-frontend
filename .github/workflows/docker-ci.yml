@@ -43,7 +43,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            cd /home/anvarjon/Golang/go-todo
+            # Navigate to your application directory on EC2
+            cd /home/anvarjon/Golang/go-todo # Replace with the actual path
+            # Pull the latest image and restart containers
             docker-compose pull app
             docker-compose down
             docker-compose up -d 
