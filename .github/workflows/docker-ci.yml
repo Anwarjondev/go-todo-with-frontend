@@ -42,8 +42,8 @@ jobs:
           host: ubuntu@ec2-3-87-56-234.compute-1.amazonaws.com
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script:
-            - cd /home/anvarjon/Golang/go-todo
-            - docker-compose pull app
-            - docker-compose down
-            - docker-compose up -d 
+          script: |
+            cd /home/anvarjon/Golang/go-todo
+            docker-compose pull app
+            docker-compose down
+            docker-compose up -d 
