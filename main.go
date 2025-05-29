@@ -1,34 +1,48 @@
 package main
 
 import (
-	"errors"
-	"github.com/ichtrojan/go-todo/routes"
-	"github.com/ichtrojan/thoth"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/Anwarjondev/go-todo-with-frontend/config"
+	"github.com/Anwarjondev/go-todo-with-frontend/controllers"
+	"github.com/gorilla/mux"
 )
 
+// @title Todo API
+// @version 1.0
+// @description This is a todo list API
+// @host localhost:8080
+// @BasePath /
 func main() {
-	logger, _ := thoth.Init("log")
-
-	if err := godotenv.Load(); err != nil {
-		logger.Log(errors.New("no .env file found"))
-		log.Fatal("No .env file found")
+	// Initialize database
+	if err := config.InitDB(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	port, exist := os.LookupEnv("PORT")
+	// Create router
+	router := mux.NewRouter()
 
-	if !exist {
-		logger.Log(errors.New("PORT not set in .env"))
-		log.Fatal("PORT not set in .env")
+	// Serve static files
+	fs := http.FileServer(http.Dir("./static"))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	// API routes
+	router.HandleFunc("/", controllers.Show).Methods("GET")
+	router.HandleFunc("/add", controllers.Add).Methods("POST")
+	router.HandleFunc("/delete/{id:[0-9]+}", controllers.Delete).Methods("GET")
+	router.HandleFunc("/complete/{id:[0-9]+}", controllers.Complete).Methods("GET")
+
+	// Get port from environment variable or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
-	err := http.ListenAndServe(":"+port, routes.Init())
-
-	if err != nil {
-		logger.Log(err)
-		log.Fatal(err)
+	// Start server
+	log.Printf("Server starting on port %s", port)
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }
