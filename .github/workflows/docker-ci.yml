@@ -43,8 +43,53 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            # Navigate to your application directory on EC2
-            cd /home/ubuntu/go-todo # Replace with the actual path
+            # Create directory if it doesn't exist
+            mkdir -p /home/ubuntu/go-todo
+            
+            # Copy docker-compose.yml to the server
+            cat > /home/ubuntu/go-todo/docker-compose.yml << 'EOL'
+            version: '3.8'
+            services:
+              app:
+                image: anwarjondev/go-todo:latest
+                ports:
+                  - "8080:8080"
+                environment:
+                  - DB_HOST=db
+                  - DB_PORT=5432
+                  - DB_USER=postgres
+                  - DB_PASS=postgres
+                  - DB_NAME=go-todo
+                  - PORT=8080
+                depends_on:
+                  - db
+                networks:
+                  - todo-network
+
+              db:
+                image: postgres:15-alpine
+                environment:
+                  - POSTGRES_USER=postgres
+                  - POSTGRES_PASSWORD=postgres
+                  - POSTGRES_DB=go-todo
+                ports:
+                  - "5434:5432"
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                networks:
+                  - todo-network
+
+            networks:
+              todo-network:
+                driver: bridge
+
+            volumes:
+              postgres_data:
+            EOL
+
+            # Navigate to the application directory
+            cd /home/ubuntu/go-todo
+            
             # Pull the latest image and restart containers
             docker-compose pull app
             docker-compose down
